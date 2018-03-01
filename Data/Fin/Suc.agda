@@ -4,7 +4,7 @@ module Data.Fin.Suc where
   open import Data.Fin.Properties as FinP
   open import Data.List as List
   open import Data.List.Any as Any
-  open Membership-≡
+  open import Data.List.Any.Membership.Propositional
   open import Data.List.Any.Membership.Map
   open import Data.List.Any.Properties as AnyP
   open import Data.Nat as N
@@ -38,7 +38,7 @@ module Data.Fin.Suc where
     open Enum e
     module M {a b p} {A : Set a} {B : Set b} {P : Pred B p}
              {f : A → B} {xs : List A} =
-      ↔ (map↔ {A = A} {B} {P} {f} {xs})
+      ↔ (map↔ {A = A} {B} {p} {P} {f} {xs})
 
     list′ = List.map suc list
 

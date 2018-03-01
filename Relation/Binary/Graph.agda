@@ -2,21 +2,32 @@ open import Relation.Binary
 
 module Relation.Binary.Graph {v e} {V : Set v} (E : Rel V e) where
 
+  open import Category.Monad
+
+  open import Data.Bool as 𝔹
+  open import Data.Bool.Properties using (¬-not)
   open import Data.Empty
-  open import Data.List hiding (any)
-  open import Data.List.All
+  open import Data.List as L hiding (any)
+  open module Dummy {a} = RawMonad (L.monad {a})
+  open import Data.List.All as All
   open import Data.List.All.Membership
-  open import Data.List.Any
-  open Membership-≡
+  open import Data.List.Any as Any
+  open import Data.List.Any.Membership
+  open import Data.List.Any.Membership.Extras
+  open import Data.List.Any.Membership.Propositional
   open import Data.List.Any.Properties
   open import Data.List.Properties
+  open import Data.List.Sorted
+  open import Data.Maybe as M hiding (All)
   open import Data.Nat hiding (_⊔_)
   open import Data.Nat.Properties
   open import Data.Nat.Properties.Simple
   open import Data.Product
-  open import Data.Star as Star
+  open import Data.Star as Star using (Star; ε; _◅_; _◅◅_)
+  open import Data.Star.Properties
   open import Data.Star.Rats
   open import Data.Sum
+  open import Data.Unit using (⊤; tt)
 
   open import Function
   open import Function.Inverse.PropositionalEquality
@@ -27,6 +38,7 @@ module Relation.Binary.Graph {v e} {V : Set v} (E : Rel V e) where
   open import Relation.Nullary
   open import Relation.Nullary.Decidable
   open import Relation.Nullary.Negation
+  open import Relation.Unary as U using ()
   open import Relation.Unary.Enum
   open import Relation.Unary.Enum.Type
 
@@ -39,90 +51,105 @@ module Relation.Binary.Graph {v e} {V : Set v} (E : Rel V e) where
 
     module V = Enum-type vertex-enum
     module E v = Enum (edge-enum v)
+  --open Finite public
 
+  Path : Rel V (v ⊔ e)
+  Path = Rats E
+
+  path-fenceposts : ∀ {v w} → Path v w → List V
+  path-fenceposts {v} ε = v ∷ []
+  path-fenceposts {v} (e ◅ es) = v ∷ path-fenceposts es
+
+  record Subpath {i j} (es : Path i j) : Set (v ⊔ e) where
+    field
+      {i′ j′} : V
+      xs : Path i i′
+      ys : Path i′ j′
+      zs : Path j′ j
+      eq : zs ◅◅ ys ◅◅ xs ≡ es
+
+  record _≈sub_ {i j} {es : Path i j} (subl subr : Subpath es)
+                : Set (v ⊔ e) where
+    open Subpath subl renaming (i′ to i′l; j′ to j′l; ys to ysl)
+    open Subpath subr renaming (i′ to i′r; j′ to j′r; ys to ysr)
+    field
+      i′ : i′l ≡ i′r
+      j′ : j′l ≡ j′r
+      ys : subst₂ Path i′ j′ ysl ≡ ysr
+
+  drop-suc : ∀ {x y} → suc x ≡ suc y → x ≡ y
+  drop-suc refl = refl
+
+  gfilter-all : ∀ {a b} {A : Set a} {B : Set b}
+                (p : A → Maybe B) (xs : List A) →
+                length (gfilter p xs) ≡ length xs → All (Is-just ∘ p) xs
+  gfilter-all p [] eq = []
+  gfilter-all p (x ∷ xs) eq with p x | inspect p x
+  gfilter-all p (x ∷ xs) eq | just y | [ pxeq ] =
+    subst (M.Any (λ _ → ⊤)) (sym pxeq) (just tt)
+    ∷ gfilter-all p xs (drop-suc eq)
+  gfilter-all p (x ∷ xs) eq | nothing | [ _ ] =
+    ⊥-elim (<⇒≢ (s≤s (length-gfilter p xs)) eq)
+
+  filter-all : ∀ {a} {A : Set a} (p : A → Bool) (xs : List A) →
+               length (filter p xs) ≡ length xs → All (T ∘ p) xs
+  filter-all p xs eq = All.map f (gfilter-all _ xs eq)
+    where
+    f : ∀ {x} → Is-just (if p x then just x else nothing) → T (p x)
+    f {x} j with p x
+    f {x} () | false
+    f {x} _ | true = tt
+
+  {-+}
   connected-component :
-    Finite → Decidable (_≡_ {A = V}) → ∀ v → Enum (Rats E v)
-  connected-component f _≟v_ v = {!!}
+    (f : Finite) → Distinct (V.list f) → Decidable (_≡_ {A = V}) →
+    ∀ v → Enum (Rats E v)
+  connected-component f dvlist _≟v_ v = {!dvlist!}
+
+  ∉-filter : ∀ {a p} {A : Set a} (P : A → Set p)
+             (dec : U.Decidable P) xs {x} →
+             x ∉ filter (⌊_⌋ ∘ dec) xs → ¬ P x
+  ∉-filter P dec xs ∉ px = ∉ (filter-∈ (⌊_⌋ ∘ dec) xs {!!} {!!})
+    --{!lookup (filter-filters P dec xs)!}
+  {+-}
+
+  {-+}
+  connected-component :
+    (f : Finite) → Distinct (V.list f) → Decidable (_≡_ {A = V}) → ∀ v → Enum (Rats E v)
+  connected-component f dvlist _≟v_ v = {!Data.Nat.Properties!}
     where
     open Finite f
     open Decidable _≟v_
 
-    go : ∀ t (hs : List V) (qs : List V) →
-         t + length hs ≤ length V.list →
-         Distinct (hs ++ qs) →
-         Consistent (Rats E v) hs →
-         Consistent (Rats E v) qs →
-         Complete (Rats (λ w h → E w h × h ∉ qs) v) hs →
-         Complete (λ q → (∃ λ h → h ∈ hs × E h q) × q ∉ hs) qs →
+    go : ∀ t (unvisited : V → Bool) →
+         length (filter unvisited V.list) ≤ t →
          Enum (Rats E v)
-    go t hs [] leq ds shs sqs phs pqs = record
-      { list = hs
-      ; consistent = shs
-      ; complete = complete
-      }
+    go zero uv le = {!le!}
+    go (suc t) uv le = go t uv′ {!!}
       where
-      complete : Complete (Rats E v) hs
-      complete {w} E*vw = phs {w} (Star.map (_, (λ ())) E*vw)
-    go zero hs (q ∷ qs) leq ds shs sqs phs pqs = ⊥-elim {!!}
-    go (suc t) hs (q ∷ qs) leq ds shs sqs phs pqs =
-      go t (q ∷∉ hs) qs′ leq′ ds′ shs′ sqs′ {!!} {!!}
-      where
-      dec = λ w → ¬? (any (w ≟v_) (q ∷ hs))
-      qs′ = filter (⌊_⌋ ∘ dec) (E.list q) ++∉ qs
+      vs vs′ : List V
+      vs = filter (not ∘ uv) V.list
+      vs′ = (vs >>= E.list) ++ vs
 
-      leq′ : t + length (q ∷∉ hs) ≤ length V.list
-      leq′ with any (q ≟v_) hs
-      leq′ | yes p = ≤⇒pred≤ _ _ leq
-      leq′ | no ¬p = begin
-        t + suc (length hs)  ≡⟨ +-suc t (length hs) ⟩
-        suc (t + length hs)  ≤⟨ leq ⟩
-        length V.list        ∎
-        where open ≤-Reasoning
+      uv′ : V → Bool
+      uv′ v = ⌊ ¬? (any (v ≟v_) vs′) ⌋
 
-      open module Dummy {r xs ys} = ↔ (++↔ {A = V} {P = r ≡_} {xs} {ys})
+      vs⊆vs′ : vs ⊆ vs′
+      vs⊆vs′ = ([] ⊆ (vs >>= E.list) ∋ λ ()) ++-mono id
 
-      ds′ : Distinct ((q ∷∉ hs) ++ qs′)
-      ds′ with any (q ≟v_) hs
-      ds′ | yes q∈hs =
-        ⊥-elim (head-distinct (pull-distinct hs ds) (to (inj₁ q∈hs)))
-      ds′ | no q∉hs = (λ { q∈ refl → q∉ q∈ }) ∷ {!!}
-        where
-        q∉ : q ∉ hs ++ qs′
-        q∉ q∈ with from {xs = hs} q∈
-        q∉ q∈ | inj₁ q∈hs = q∉hs q∈hs
-        q∉ q∈ | inj₂ q∈qs′ = {!!}
-          where
-          q∉list : q ∉ filter (⌊_⌋ ∘ dec) (E.list q)
-          q∉list q∈list =
-            All-∈→ (filter-filters (λ w → w ∉ q ∷ hs) dec (E.list q))
-                   q∈list
-                   (here refl)
+      uv′⊆uv : filter uv′ V.list ⊆ filter uv V.list
+      uv′⊆uv {v} v∈uv′ =
+        let v∉vs′ = lookup (filter-filters (λ x → ¬ (x ∈ vs′)) (λ x → ¬? (any (x ≟v_) vs′)) V.list) v∈uv′ in
+        let v∉vs = v∉vs′ ∘ vs⊆vs′ in
+        --filter-∈ uv V.list (V.complete v) {!filter-filters (λ x → not (uv x) ≡ true) ? V.list ,′ vs!}
+        case uv v 𝔹.≟ true of λ
+        { (yes p) → filter-∈ uv V.list (V.complete v) p
+        ; (no ¬p) → ⊥-elim (v∉vs (filter-∈ (not ∘ uv) V.list (V.complete v) (sym (¬-not (¬p ∘ sym)))))
+        }
 
-          q∉qs : q ∉ qs
-          q∉qs = head-distinct (pull-distinct hs ds) ∘ to {xs = hs} ∘ inj₂
+      uv′≤uv : length (filter uv′ V.list) ≤ length (filter uv V.list)
+      uv′≤uv = ⊆-length (filter-Distinct uv′ {xs = V.list} {!!}) uv′⊆uv
 
-      shs′ : Consistent (Rats E v) (q ∷∉ hs)
-      shs′ w∈ with any (q ≟v_) hs
-      shs′ w∈ | yes p = shs w∈
-      shs′ (here px) | no ¬p = sqs (here px)
-      shs′ (there w∈) | no ¬p = shs w∈
-
-      sqs′ : Consistent (Rats E v) qs′
-      sqs′ w∈ = {!!}
-      --sqs′ {r} r∈qs′ with from r∈qs′
-      --... | inj₁ r∈list = E.consistent q r∈list ◅ sqs (here refl)
-      --... | inj₂ r∈qs = sqs (there r∈qs)
-
-      --pqs′ :
-      --  Complete (λ r → (∃ λ h → h ∈ (q ∷ hs) × E h r) × r ∉ (q ∷ hs)) qs′
-      --pqs′ {r} ((h , h∈qhs , Ehr), r∉qhs) with pqs {r} {!!}
-      --... | here px = ⊥-elim (r∉qhs (here px))
-      --... | there r∈qs = to {xs = E.list q} (inj₂ r∈qs)
-
-      phs′ : Complete (Rats (λ w h → E w h × h ∉ qs′) v) (q ∷ hs)
-      phs′ {x} rs = to {xs = q ∷ []} {hs} {!phs!}
-        where
-        l : x ∈ q ∷ [] ⊎ x ∈ hs
-        l with x ≟v q
-        l | yes x=q = inj₁ (here x=q)
-        l | no ¬x=q = inj₂ (phs {!!})
+      uv′<uv : suc (length (filter uv′ V.list)) ≤ length (filter uv V.list)
+      uv′<uv = {!!}
+  {+-}

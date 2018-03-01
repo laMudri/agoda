@@ -5,7 +5,7 @@ module Data.List.All.Membership {a p} {A : Set a} {P : Pred A p} where
   open import Data.List
   open import Data.List.All
   open import Data.List.Any
-  open Membership-≡
+  open import Data.List.Any.Membership.Propositional
 
   open import Function
   open import Function.Equivalence.PropositionalEquality

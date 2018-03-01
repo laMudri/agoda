@@ -2,7 +2,7 @@ module Relation.Unary.Enum.Type where
 
   open import Data.List as List
   open import Data.List.Any as Any
-  open Membership-≡
+  open import Data.List.Any.Membership.Propositional
   open import Data.Unit
 
   open import Relation.Unary as U hiding (_∈_)

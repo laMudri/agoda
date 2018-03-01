@@ -3,10 +3,15 @@ open import Relation.Binary
 module Data.List.Distinct {c ℓ} (S : Setoid c ℓ) where
   open Setoid S renaming (Carrier to C)
 
+  open import Data.Bool
   open import Data.List hiding (any)
+  open import Data.List.All as All
+  open import Data.List.All.Properties using (anti-mono)
   open import Data.List.Any as Any
+  open import Data.List.Any.Membership S
   open import Data.List.Any.Properties
-  open Membership S
+  open import Data.List.Properties
+  open import Data.List.Sorted {A = C}
   open import Data.Sum as ⊎
 
   open import Function
@@ -20,17 +25,16 @@ module Data.List.Distinct {c ℓ} (S : Setoid c ℓ) where
 
   open import Relation.Binary.PropositionalEquality as PEq using (_≡_)
   open import Relation.Nullary
+  open import Relation.Nullary.Decidable
+  open import Relation.Nullary.Negation
   open import Relation.Unary as U hiding (_∈_; _∉_; Decidable)
 
-  data Distinct : List C → Set (c ⊔ ℓ) where
-    [] : Distinct []
-    _∷_ : ∀ {x xs} (dx : ∀ {y} → y ∈ xs → ¬ x ≈ y) (dxs : Distinct xs) →
-          Distinct (x ∷ xs)
+  _≉_ = λ x y → ¬ x ≈ y
 
-  --∈≉∈ : ∀ {x y xs} → x ∈ xs → y ∈ xs → Distinct
+  Distinct = SortedBy _≉_
 
-  head-distinct : ∀ {x xs} → Distinct (x ∷ xs) → x ∉ xs
-  head-distinct (dx ∷ dxs) x∈xs = dx x∈xs refl
+  head-distinct : ∀ {x xs} → Distinct (x ∷ xs) → All (x ≉_) xs
+  head-distinct (dx ∷ _) = dx
 
   tail-distinct : ∀ {x xs} → Distinct (x ∷ xs) → Distinct xs
   tail-distinct (_ ∷ dxs) = dxs
@@ -42,34 +46,45 @@ module Data.List.Distinct {c ℓ} (S : Setoid c ℓ) where
 
   remove-distinct : ∀ {y ys} xs → Distinct (xs ++ y ∷ ys) → Distinct (xs ++ ys)
   remove-distinct [] dxs = tail-distinct dxs
-  remove-distinct (x ∷ xs) (dx ∷ dxs) =
-    dx ∘ insert-∈ xs ∷ remove-distinct xs dxs
+  remove-distinct {y} {ys} (x ∷ xs) (dx ∷ dxs) =
+    anti-mono (λ {z} z∈xsys → to {z} {xs} {y ∷ ys} (⊎.map id (there {x = y}) (from z∈xsys))) dx SortedBy.∷ remove-distinct xs dxs
+    where
+    open module Dummy {z : C} {as bs} = ↔ (++↔ {P = z ≡_} {xs = as} {bs})
 
+  {-+}
   pull-distinct : ∀ {y ys} xs →
                      Distinct (xs ++ y ∷ ys) → Distinct (y ∷ xs ++ ys)
   pull-distinct [] dxs = dxs
   pull-distinct {y} {ys} (x ∷ xs) (dx ∷ dxs) with pull-distinct xs dxs
-  ... | dy ∷ dys = dy′ ∷ (λ z∈ → dx (insert-∈ xs z∈)) ∷ dys
+  ... | dy ∷ dys = {!!} --dy′ ∷ (λ z∈ → dx (insert-∈ xs z∈)) ∷ dys
     where
     open ↔ (++↔ {xs = xs} {y ∷ ys})
 
     dy′ : ∀ {z} → z ∈ x ∷ xs ++ ys → ¬ y ≈ z
-    dy′ (here z≈x) y≈z = dx (to (inj₂ (here refl))) (sym (trans y≈z z≈x))
-    dy′ (there z∈) = dy z∈
+    dy′ (here z≈x) y≈z = {!!} --dx (to (inj₂ (here refl))) (sym (trans y≈z z≈x))
+    dy′ (there z∈) = {!!} --dy z∈
+  {+-}
 
   module Decidable (_≟_ : Decidable _≈_) where
 
-    infixr 5 _∷∉_ _++∉_
+    infixr 5 _∷∉_ --_++∉_
 
     _∷∉_ : C → List C → List C
     x ∷∉ xs with any (x ≟_) xs
     ... | yes p = xs
     ... | no ¬p = x ∷ xs
 
+    nub-by-distinct : ∀ xs → Distinct (nub-by (λ x y → ⌊ ¬? (x ≟ y) ⌋) xs)
+    nub-by-distinct [] = []
+    nub-by-distinct (x ∷ xs) =
+      filter-filters (x ≉_) (¬? ∘ x ≟_) (nub-by (λ x y → ⌊ ¬? (x ≟ y) ⌋) xs)
+      ∷ filter-Sorted (⌊_⌋ ∘ ¬? ∘ x ≟_) (nub-by-distinct xs)
+
+    {-+}
     ∷∉-distinct : ∀ x {xs} → Distinct xs → Distinct (x ∷∉ xs)
     ∷∉-distinct x {xs} dxs with any (x ≟_) xs
     ... | yes p = dxs
-    ... | no ¬p = (λ y∈xs x≈y → ¬p (Any.map (trans x≈y) y∈xs)) ∷ dxs
+    ... | no ¬p = {!!} --(λ y∈xs x≈y → ¬p (Any.map (trans x≈y) y∈xs)) ∷ dxs
 
     _++∉_ : List C → List C → List C
     [] ++∉ ys = ys
@@ -80,4 +95,5 @@ module Data.List.Distinct {c ℓ} (S : Setoid c ℓ) where
     ++∉-distinct (x ∷ xs) {ys} dys with any (x ≟_) (xs ++∉ ys)
     ... | yes p = ++∉-distinct xs dys
     ... | no ¬p =
-      (λ y∈ x≈y → ¬p (Any.map (trans x≈y) y∈)) ∷ ++∉-distinct xs dys
+      {!!} --(λ y∈ x≈y → ¬p (Any.map (trans x≈y) y∈)) ∷ ++∉-distinct xs dys
+    {+-}

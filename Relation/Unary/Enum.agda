@@ -11,12 +11,12 @@ module Relation.Unary.Enum where
   open import Data.List.All as All
   open import Data.List.All.Membership
   open import Data.List.Any as Any
-  open Membership-≡
-  open import Data.List.Any.Membership as Mem
   open import Data.List.Any.Membership.Map as MemMap
+  open import Data.List.Any.Membership.Propositional
+  open import Data.List.Any.Membership.Propositional.Properties
   open import Data.List.Any.Properties as AnyP
   open import Data.List.Properties as ListP
-  open import Data.Product as Σ
+  open import Data.Product as Σ hiding (,_)
   open import Data.Sum as ⊎
 
   open import Function
@@ -115,6 +115,9 @@ module Relation.Unary.Enum where
     Enum→Dec a with Any.any (eq? a) list
     ... | yes a∈ = yes (consistent a∈)
     ... | no ¬a∈ = no (¬a∈ ∘ complete)
+
+  ∈-enum : ∀ {a} {A : Set a} (xs : List A) → Enum (_∈ xs)
+  ∈-enum xs = record { list = xs ; consistent = id ; complete = id }
 
   -- TODO: move
   infixr 4 _=[_]⇒_
