@@ -6,6 +6,7 @@ module Relation.Unary.Enum.Product where
   open import Data.List.Any as Any
   open import Data.List.Any.Membership.Propositional
   open import Data.List.Any.Membership.Propositional.Properties
+  open import Data.List.Sorted
   open import Data.Product hiding (,_)
 
   open import Function.Inverse
@@ -19,7 +20,7 @@ module Relation.Unary.Enum.Product where
   module _ {a p q} {A B : Set a} {P : Pred A p} {Q : Pred B q} where
     _×-enum_ : Enum P → Enum Q → Enum (P ⟨×⟩ Q)
     _×-enum_ pe qe = record
-      { list = pure _,_ ⊛ P.list ⊛ Q.list
+      { list = List.map _,_ P.list ⊛ Q.list
       ; consistent = consistent
       ; complete = complete
       }
@@ -27,22 +28,21 @@ module Relation.Unary.Enum.Product where
       module P = Enum pe
       module Q = Enum qe
       open module Dummy = RawMonad List.monad
-      open module Dummy2 {A B} fs xs {y} = ↔ (⊛-∈↔ {A = A} {B} fs {xs} {y})
+      module ⊛ {A B} fs xs {y} = ↔ (⊛-∈↔ {A = A} {B} fs {xs} {y})
+      module map {A B} f xs {y} = ↔ (map-∈↔ {A = A} {B} {f} {y} {xs})
 
-      consistent : Consistent (P ⟨×⟩ Q) (pure _,_ ⊛ P.list ⊛ Q.list)
-      consistent ab∈ with from (pure _,_ ⊛ P.list) Q.list ab∈
-      ... | f , x , f∈ , x∈ , refl with from (pure _,_) P.list f∈
-      ... | ._,_ , y , here refl , y∈ , refl =
-        P.consistent y∈ , Q.consistent x∈
-      ... | g , y , there () , y∈ , refl
+      consistent : Consistent (P ⟨×⟩ Q) (List.map _,_ P.list ⊛ Q.list)
+      consistent ab∈ with ⊛.from (List.map _,_ P.list) Q.list ab∈
+      ... | f , x , f∈ , x∈ , refl with map.from _,_ P.list f∈
+      ... | ._ , y∈ , refl = P.consistent y∈ , Q.consistent x∈
 
-      complete : Complete (P ⟨×⟩ Q) (pure _,_ ⊛ P.list ⊛ Q.list)
+      complete : Complete (P ⟨×⟩ Q) (List.map _,_ P.list ⊛ Q.list)
       complete {x , y} (p , q) =
-        to (pure _,_ ⊛ P.list) Q.list
-           ((x ,_) , y
-           , to (pure _,_) P.list
-                (_,_ , x , here refl , P.complete p , refl)
-           , Q.complete q , refl)
+        ⊛.to (List.map _,_ P.list) Q.list
+             ((x ,_) , y
+             , map.to _,_ P.list (x , P.complete p , refl)
+             , Q.complete q , refl)
 
-    _×-enum-minimal_ : ∀ {d e} → Minimal P d → Minimal Q e → Minimal _ (d ×-enum e)
+    _×-enum-minimal_ :
+      ∀ {d e} → Minimal P d → Minimal Q e → Minimal _ (d ×-enum e)
     md ×-enum-minimal me = {!!}

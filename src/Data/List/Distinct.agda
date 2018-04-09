@@ -6,12 +6,13 @@ module Data.List.Distinct {c ℓ} (S : Setoid c ℓ) where
   open import Data.Bool
   open import Data.List hiding (any)
   open import Data.List.All as All
-  open import Data.List.All.Properties using (anti-mono)
+  open import Data.List.All.Properties as AllP using (anti-mono)
   open import Data.List.Any as Any
   open import Data.List.Any.Membership S
   open import Data.List.Any.Properties
   open import Data.List.Properties
   open import Data.List.Sorted {A = C}
+  open import Data.Product
   open import Data.Sum as ⊎
 
   open import Function
@@ -64,6 +65,17 @@ module Data.List.Distinct {c ℓ} (S : Setoid c ℓ) where
     dy′ (here z≈x) y≈z = {!!} --dx (to (inj₂ (here refl))) (sym (trans y≈z z≈x))
     dy′ (there z∈) = {!!} --dy z∈
   {+-}
+
+  ++-distinct : ∀ {xs ys} → (∀ {x} → x ∈ xs → x ∉ ys) →
+                Distinct xs → Distinct ys → Distinct (xs ++ ys)
+  ++-distinct {.[]} {ys} apart [] dys = dys
+  ++-distinct {.(_ ∷ _)} {ys} apart (dx ∷ dxs) dys =
+    to (dx , All.tabulate
+               λ {x} x∈ys xq →
+                 apart (here refl) (Any.map (λ { PEq.refl → xq }) x∈ys))
+    ∷ ++-distinct (apart ∘ there) dxs dys
+    where
+    open ↔ AllP.++↔
 
   module Decidable (_≟_ : Decidable _≈_) where
 
