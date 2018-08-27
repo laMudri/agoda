@@ -8,10 +8,10 @@ module Data.List.Distinct {c ℓ} (S : Setoid c ℓ) where
   open import Data.List.All as All
   open import Data.List.All.Properties as AllP using (anti-mono)
   open import Data.List.Any as Any
-  open import Data.List.Any.Membership S
+  open import Data.List.Membership.Setoid S
   open import Data.List.Any.Properties
   open import Data.List.Properties
-  open import Data.List.Sorted {A = C}
+  open import Data.List.Sorted
   open import Data.Product
   open import Data.Sum as ⊎
 
@@ -66,17 +66,6 @@ module Data.List.Distinct {c ℓ} (S : Setoid c ℓ) where
     dy′ (there z∈) = {!!} --dy z∈
   {+-}
 
-  ++-distinct : ∀ {xs ys} → (∀ {x} → x ∈ xs → x ∉ ys) →
-                Distinct xs → Distinct ys → Distinct (xs ++ ys)
-  ++-distinct {.[]} {ys} apart [] dys = dys
-  ++-distinct {.(_ ∷ _)} {ys} apart (dx ∷ dxs) dys =
-    to (dx , All.tabulate
-               λ {x} x∈ys xq →
-                 apart (here refl) (Any.map (λ { PEq.refl → xq }) x∈ys))
-    ∷ ++-distinct (apart ∘ there) dxs dys
-    where
-    open ↔ AllP.++↔
-
   module Decidable (_≟_ : Decidable _≈_) where
 
     infixr 5 _∷∉_ --_++∉_
@@ -86,11 +75,11 @@ module Data.List.Distinct {c ℓ} (S : Setoid c ℓ) where
     ... | yes p = xs
     ... | no ¬p = x ∷ xs
 
-    nub-by-distinct : ∀ xs → Distinct (nub-by (λ x y → ⌊ ¬? (x ≟ y) ⌋) xs)
+    nub-by-distinct : ∀ xs → Distinct (nub-by (λ x y → ¬? (x ≟ y)) xs)
     nub-by-distinct [] = []
     nub-by-distinct (x ∷ xs) =
-      filter-filters (x ≉_) (¬? ∘ x ≟_) (nub-by (λ x y → ⌊ ¬? (x ≟ y) ⌋) xs)
-      ∷ filter-Sorted (⌊_⌋ ∘ ¬? ∘ x ≟_) (nub-by-distinct xs)
+      AllP.filter⁺₁ (¬? ∘ (x ≟_)) (nub-by (λ x y → ¬? (x ≟ y)) xs)
+      ∷ filter-Sorted (¬? ∘ x ≟_) (nub-by-distinct xs)
 
     {-+}
     ∷∉-distinct : ∀ x {xs} → Distinct xs → Distinct (x ∷∉ xs)

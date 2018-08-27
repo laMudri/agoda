@@ -11,11 +11,13 @@ module Relation.Unary.Enum where
   open import Data.List.All as All
   open import Data.List.All.Membership
   open import Data.List.Any as Any
-  open import Data.List.Any.Membership.Map as MemMap
-  open import Data.List.Any.Membership.Propositional
-  open import Data.List.Any.Membership.Propositional.Properties
   open import Data.List.Any.Properties as AnyP
+  open import Data.List.Categorical as LC
+  open import Data.List.Any.Membership.Map as MemMap
+  open import Data.List.Membership.Propositional
+  open import Data.List.Membership.Propositional.Properties
   open import Data.List.Properties as ListP
+  open import Data.List.Relation.Sublist.Propositional.Properties
   open import Data.Product as Σ hiding (,_)
   open import Data.Sum as ⊎
 
@@ -61,11 +63,9 @@ module Relation.Unary.Enum where
 
     _∩-enum_ : Enum P → U.Decidable Q → Enum (P ∩ Q)
     pe ∩-enum qd = record
-      { list = filter (⌊_⌋ ∘ qd) list
-      ; consistent = λ a∈ → consistent (filter-⊆ (⌊_⌋ ∘ qd) list a∈)
-                          , All-∈→ (filter-filters Q qd list) a∈
-      ; complete = λ { (pa , qa) →
-          filter-∈ (⌊_⌋ ∘ qd) list (complete pa) (⇔.to T-≡ (fromWitness qa))
+      { list = filter qd list
+      ; consistent = λ a∈ → Σ.map consistent id (∈-filter⁻ qd a∈)
+      ; complete = λ { (pa , qa) → ∈-filter⁺ qd (complete pa) qa
         }
       }
       where
@@ -104,7 +104,7 @@ module Relation.Unary.Enum where
       where
       module P = Enum pe
       module Q (a : _) = Enum (qe a)
-      open RawMonad List.monad
+      open RawMonad LC.monad
       open module Dummy {y : _} = ↔ (>>=-∈↔ {A = A} {B} {P.list} {Q.list} {y})
 
   module _ {a p A P} (eq? : B.Decidable (_≡_ {A = A}))

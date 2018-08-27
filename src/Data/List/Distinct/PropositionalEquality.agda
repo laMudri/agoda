@@ -5,11 +5,12 @@ module Data.List.Distinct.PropositionalEquality where
   open import Data.Fin using (Fin; toℕ)
   open import Data.List as List hiding (any; [_])
   open import Data.List.All as All
-  open import Data.List.All.Properties
+  open import Data.List.All.Properties as AllP
   open import Data.List.Any as Any
+  open import Data.List.Categorical as LC
   --open import Data.List.Any.Membership using (find)
-  open import Data.List.Any.Membership.Propositional
-  open import Data.List.Any.Properties
+  open import Data.List.Membership.Propositional
+  open import Data.List.Any.Properties as AnyP
   open import Data.List.Sorted
   open import Data.Nat
   open import Data.Nat.Properties
@@ -39,8 +40,8 @@ module Data.List.Distinct.PropositionalEquality where
 
   ∈≡ : ∀ {a A x xs} → Distinct {a} {A} xs → (e f : x ∈ xs) → e ≡ f
   ∈≡ ds (here refl) (here refl) = refl
-  ∈≡ (dx ∷ ds) (here refl) (there f) = ⊥-elim (lookup dx f refl)
-  ∈≡ (dx ∷ ds) (there e) (here refl) = ⊥-elim (lookup dx e refl)
+  ∈≡ (dx ∷ ds) (here refl) (there f) = ⊥-elim (All.lookup dx f refl)
+  ∈≡ (dx ∷ ds) (there e) (here refl) = ⊥-elim (All.lookup dx e refl)
   ∈≡ (dx ∷ ds) (there e) (there f) = cong there (∈≡ ds e f)
 
   module Decidable {a A} (_≟_ : Decidable (_≡_ {a} {A})) where
@@ -85,6 +86,24 @@ module Data.List.Distinct.PropositionalEquality where
       from ps = {!!}
     {+-}
 
+  module _ {a} {A : Set a} where
+
+    ++-distinct⁺ : ∀ {xs ys : List A} → (∀ {x} → x ∈ xs → x ∉ ys) →
+                   Distinct xs → Distinct ys → Distinct (xs ++ ys)
+    ++-distinct⁺ {[]} {ys} disj [] dys = dys
+    ++-distinct⁺ {x ∷ xs} {ys} disj (dx ∷ dxs) dys =
+      AllP.++⁺ dx (All.tabulate (λ z∈ys xz → disj (here (sym xz)) z∈ys))
+      ∷ ++-distinct⁺ (disj ∘ there) dxs dys
+
+    ++-distinct⁻ : ∀ xs {ys : List A} → Distinct (xs ++ ys) →
+                   (∀ {x} → x ∈ xs → x ∉ ys) × Distinct xs × Distinct ys
+    ++-distinct⁻ ([]) ds = (λ { () x∈ys }) , [] , ds
+    ++-distinct⁻ (x ∷ xs) (d ∷ ds) =
+      let disj , dxs , dys = ++-distinct⁻ xs ds in
+      (λ { (here zx) z∈ys → All.lookup d (AnyP.++⁺ʳ xs z∈ys) (sym zx)
+         ; (there x∈xs) x∈ys → disj x∈xs x∈ys })
+      , (AllP.++⁻ˡ xs d ∷ dxs) , dys
+
   Distinct-map : ∀ {a b} {A : Set a} {B : Set b} (f : A ↣ B) {xs} (open ↣ f) →
                  Distinct xs → Distinct (List.map to xs)
   Distinct-map f {[]} [] = []
@@ -96,6 +115,7 @@ module Data.List.Distinct.PropositionalEquality where
            Any P xs → Any Q ys → Set
   px ≈Any py = toℕ (index px) ≡ toℕ (index py)
 
+  {-
   Distinct-concat : ∀ {a} {A : Set a} (xss : List (List A)) →
                     (∀ {x x′ xs xs′} (x∈ : x ∈ xs) (x′∈ : x′ ∈ xs′)
                      (xs∈ : xs ∈ xss) (xs′∈ : xs′ ∈ xss) →
@@ -103,12 +123,20 @@ module Data.List.Distinct.PropositionalEquality where
                     Distinct (concat xss)
   Distinct-concat [] dss = []
   Distinct-concat (xs ∷ xss) dss =
-    ++-distinct (λ x∈xs x∈xss → {!dss x∈xs ? (there x∈xss)!}) {!dss!} (Distinct-concat xss λ { x∈ x′∈ xs∈ xs′∈ xq → ×.map id suc-injective (dss x∈ x′∈ (there xs∈) (there xs′∈) xq) })
+    ++-distinct⁺ {xs = xs} {concat xss} {!!} {!dss!} (Distinct-concat xss {!!})
+    -- ++-distinct (λ x∈xs x∈xss → {!dss x∈xs x∈xs!}) {!dss!} (Distinct-concat xss λ { x∈ x′∈ xs∈ xs′∈ xq → ×.map id suc-injective (dss x∈ x′∈ (there xs∈) (there xs′∈) xq) })
 
-  Distinct-⊛ : ∀ {a} {A B : Set a} (fs : List (A → B)) {xs} →
-               (∀ {f f′ x x′}
-                (f∈ : f ∈ fs) (f′∈ : f′ ∈ fs) (x∈ : x ∈ xs) (x′∈ : x′ ∈ xs) →
-                f x ≡ f′ x′ → f∈ ≈Any f′∈ × x∈ ≈Any x′∈) →
-               let open RawMonad List.monad in
-               Distinct xs → Distinct (fs ⊛ xs)
-  Distinct-⊛ fs {xs} dfs dxs = {!concat!}
+  module _ {a} {A B : Set a} where
+    open RawMonad (LC.monad {a})
+
+    Distinct-⊛ : ∀ (fs : List (A → B)) {xs} →
+                 (∀ {f f′ x x′}
+                  (f∈ : f ∈ fs) (f′∈ : f′ ∈ fs) (x∈ : x ∈ xs) (x′∈ : x′ ∈ xs) →
+                  f x ≡ f′ x′ → f∈ ≈Any f′∈ × x∈ ≈Any x′∈) →
+                 Distinct xs → Distinct (fs ⊛ xs)
+    Distinct-⊛ fs {xs} dfs dxs =
+      Distinct-concat (List.map (λ f → concat (List.map (λ x → f x ∷ []) xs))
+                                fs)
+                      (λ {x} {x′} {xs} {xs′} x∈ x′∈ xs∈ xs′∈ xq →
+                         {!dfs!})
+  -}

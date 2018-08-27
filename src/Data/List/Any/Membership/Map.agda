@@ -1,7 +1,7 @@
 module Data.List.Any.Membership.Map {a b} {A : Set a} {B : Set b} where
   open import Data.List as List
   open import Data.List.Any as Any
-  open import Data.List.Any.Membership.Propositional
+  open import Data.List.Membership.Propositional
   open import Data.Product as Σ
 
   open import Function

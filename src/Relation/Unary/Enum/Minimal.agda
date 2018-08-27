@@ -8,7 +8,7 @@ module Relation.Unary.Enum.Minimal {a p A} (P : Pred {a} A p) where
   open import Data.Fin
   open import Data.List
   open import Data.List.Any
-  open import Data.List.Any.Membership.Propositional
+  open import Data.List.Membership.Propositional
   open import Data.List.Extras
   open import Data.List.Sorted
   open import Data.Nat
@@ -63,14 +63,22 @@ module Relation.Unary.Enum.Minimal {a p A} (P : Pred {a} A p) where
   module _ (_≟_ : B.Decidable (_≡_ {A = A})) where
     minimise : Enum P → Enum P
     minimise e = record
-      { list = list′
+      { list = nub-by (λ x y → ¬? (x ≟ y)) list
       ; consistent = consistent ∘ from
       ; complete = to ∘ complete
       }
       where
       open Enum e
-      open module Dummy {x} = ⇔ (nub-by-∈⇔ {x = x} {list} _≟_)
-      list′ = nub-by (λ x y → ⌊ ¬? (x ≟ y) ⌋) list
+      DS : DecSetoid _ _
+      DS = record
+        { Carrier = A
+        ; _≈_ = _≡_
+        ; isDecEquivalence = record
+          { isEquivalence = isEquivalence
+          ; _≟_ = _≟_
+          }
+        }
+      open module Dummy {x} = ⇔ (nub-by-∈⇔ DS {x = x} {list})
 
     minimise-minimal : ∀ e → Minimal (minimise e)
     minimise-minimal e = nub-by-distinct (Enum.list e)

@@ -3,7 +3,7 @@ module Data.List.Extras where
   open import Data.Fin
   open import Data.List
   open import Data.List.Any
-  open import Data.List.Any.Membership.Propositional
+  open import Data.List.Membership.Propositional
   open import Data.Nat
 
   open import Relation.Binary.PropositionalEquality
