@@ -4,7 +4,6 @@ module Data.List.Sorted where
   open import Data.List.All as All renaming (all to All?)
   open import Data.List.All.Properties
   open import Data.List.Any as Any
-  --open import Data.List.Any.Membership
   import Data.List.Membership.Setoid as MemS
   open import Data.List.Membership.Setoid.Properties
   open import Data.List.Properties

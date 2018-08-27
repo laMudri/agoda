@@ -13,8 +13,8 @@ module Relation.Unary.Enum where
   open import Data.List.Any as Any
   open import Data.List.Any.Properties as AnyP
   open import Data.List.Categorical as LC
-  open import Data.List.Any.Membership.Map as MemMap
   open import Data.List.Membership.Propositional
+  open import Data.List.Membership.Propositional.Map as MemMap
   open import Data.List.Membership.Propositional.Properties
   open import Data.List.Properties as ListP
   open import Data.List.Relation.Sublist.Propositional.Properties

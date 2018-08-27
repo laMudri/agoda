@@ -1,13 +1,14 @@
-module Data.List.Any.Membership.Extras {a} {A : Set a} where
+module Data.List.Membership.Propositional.Extras {a} {A : Set a} where
 
   open import Data.Empty
   open import Data.Fin using (Fin; zero; suc)
   open import Data.List
   open import Data.List.All as All
   open import Data.List.Any as Any
-  open import Data.List.Any.Membership.Propositional
+  open import Data.List.Membership.Propositional
   open import Data.List.Extras
   -- ↓ Data.List.Distinct
+  open import Data.List.Relation.Sublist.Propositional
   open import Data.List.Sorted
   open import Data.Maybe using (Maybe; nothing; just)
   open import Data.Nat hiding (_⊔_)
@@ -64,11 +65,11 @@ module Data.List.Any.Membership.Extras {a} {A : Set a} where
   ⊆-index-injection {.x} {w} {x ∷ xs} {ys} (dx ∷ dxs) sub (here refl) (there w∈xs) eq = ⊥-elim (x≢w x≡w)
     where
     x≡w = ≡-from-index eq
-    x≢w = lookup dx w∈xs
+    x≢w = All.lookup dx w∈xs
   ⊆-index-injection {v} {.x} {x ∷ xs} {ys} (dx ∷ dxs) sub (there v∈xs) (here refl) eq = ⊥-elim (x≢v (sym v≡x))
     where
     v≡x = ≡-from-index eq
-    x≢v = lookup dx v∈xs
+    x≢v = All.lookup dx v∈xs
   ⊆-index-injection {v} {w} {x ∷ xs} {ys} (dx ∷ dxs) sub (there v∈xs) (there w∈xs) eq = cong suc (⊆-index-injection dxs (sub ∘ there) v∈xs w∈xs eq)
 
   ⊆-reduce : ∀ {x : A} {xs ys} → Distinct (x ∷ xs) → x ∷ xs ⊆ ys →

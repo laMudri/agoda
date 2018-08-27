@@ -3,7 +3,7 @@ module Data.Fin.Enum where
   open import Data.Fin
   open import Data.List as List
   open import Data.List.Any
-  open import Data.List.Any.Membership.Map
+  open import Data.List.Membership.Propositional.Map
   open import Data.Nat
 
   open import Relation.Binary.PropositionalEquality

@@ -8,14 +8,14 @@ module Relation.Binary.Graph {v e} {V : Set v} (E : Rel V e) where
   open import Data.Bool.Properties using (¬-not)
   open import Data.Empty
   open import Data.List as L hiding (any)
-  open module Dummy {a} = RawMonad (L.monad {a})
+  import Data.List.Categorical as LC
+  open module Dummy {a} = RawMonad (LC.monad {a})
   open import Data.List.All as All
   open import Data.List.All.Membership
   open import Data.List.Any as Any
-  open import Data.List.Any.Membership
-  open import Data.List.Any.Membership.Extras
-  open import Data.List.Any.Membership.Propositional
   open import Data.List.Any.Properties
+  open import Data.List.Membership.Propositional
+  open import Data.List.Membership.Propositional.Extras
   open import Data.List.Properties
   open import Data.List.Sorted
   open import Data.Maybe as M hiding (All)
@@ -91,6 +91,7 @@ module Relation.Binary.Graph {v e} {V : Set v} (E : Rel V e) where
   gfilter-all p (x ∷ xs) eq | nothing | [ _ ] =
     ⊥-elim (<⇒≢ (s≤s (length-gfilter p xs)) eq)
 
+  {-+}
   filter-all : ∀ {a} {A : Set a} (p : A → Bool) (xs : List A) →
                length (filter p xs) ≡ length xs → All (T ∘ p) xs
   filter-all p xs eq = All.map f (gfilter-all _ xs eq)
@@ -99,6 +100,7 @@ module Relation.Binary.Graph {v e} {V : Set v} (E : Rel V e) where
     f {x} j with p x
     f {x} () | false
     f {x} _ | true = tt
+  {+-}
 
   {-+}
   connected-component :

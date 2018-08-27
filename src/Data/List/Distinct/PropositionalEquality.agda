@@ -8,7 +8,6 @@ module Data.List.Distinct.PropositionalEquality where
   open import Data.List.All.Properties as AllP
   open import Data.List.Any as Any
   open import Data.List.Categorical as LC
-  --open import Data.List.Any.Membership using (find)
   open import Data.List.Membership.Propositional
   open import Data.List.Any.Properties as AnyP
   open import Data.List.Sorted

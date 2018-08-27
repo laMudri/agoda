@@ -9,8 +9,9 @@ module Data.Graph where
   open import Data.List as List hiding ([_])
   open import Data.List.All as All
   open import Data.List.Any as Any renaming (any to any?)
-  open import Data.List.Any.Membership.Propositional
-  open import Data.List.Any.Membership.Propositional.Properties
+  import Data.List.Categorical as LC
+  open import Data.List.Membership.Propositional
+  open import Data.List.Membership.Propositional.Properties
   open import Data.List.Any.Properties as AP
   open import Data.List.Properties
   open import Data.Maybe
@@ -171,11 +172,12 @@ module Data.Graph where
   ... | just y | .(just y) | refl = ≡.cong (y ∷_) (gfilter-≗ fg xs)
   ... | nothing | .nothing | refl = gfilter-≗ fg xs
 
+  {-
   filter-≗ : ∀ {a A p q} → p ≗ q → (xs : List A) →
              filter {a} {A} p xs ≡ filter q xs
   filter-≗ pq xs = gfilter-≗ (λ x → ≡.cong (if_then _ else _) (pq x)) xs
 
-  open RawMonad {lzero} List.monad
+  open RawMonad {lzero} LC.monad
 
   connected-vertices : ∀ {n} → List (Fin n) → Graph n → List (Fin n)
   connected-vertices {zero} us G = []
@@ -205,9 +207,10 @@ module Data.Graph where
   ...     | w , w∈ , p = u , u∈
     , [ u , punchIn u w ]
       All.lookup
-        (filter-filters (T ∘ G u ∘ punchIn u)
-                        (T∘f? (G u ∘ punchIn u))
-                        (allFin n))
+        ?
+        -- (filter-filters (T ∘ G u ∘ punchIn u)
+        --                 (T∘f? (G u ∘ punchIn u))
+        --                 (allFin n))
         (subst (w ∈_)
                (≡.sym (filter-≗ (⌊T∘f?⌋ (G u ∘ punchIn u)) (allFin n)))
                w∈)
@@ -266,3 +269,4 @@ module Data.Graph where
   -- Remove edges to and from deleted nodes (but keep all the nodes themselves)
   subgraph : ∀ {n} → (Fin n → Bool) → Graph n → Graph n
   subgraph p G u v = p u ∧ p v ∧ G u v
+  -}

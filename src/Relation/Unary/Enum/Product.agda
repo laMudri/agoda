@@ -4,8 +4,9 @@ module Relation.Unary.Enum.Product where
 
   open import Data.List as List
   open import Data.List.Any as Any
-  open import Data.List.Any.Membership.Propositional
-  open import Data.List.Any.Membership.Propositional.Properties
+  open import Data.List.Categorical as LC
+  open import Data.List.Membership.Propositional
+  open import Data.List.Membership.Propositional.Properties
   open import Data.List.Sorted
   open import Data.Product hiding (,_)
 
@@ -27,7 +28,7 @@ module Relation.Unary.Enum.Product where
       where
       module P = Enum pe
       module Q = Enum qe
-      open module Dummy = RawMonad List.monad
+      open module Dummy = RawMonad LC.monad
       module ⊛ {A B} fs xs {y} = ↔ (⊛-∈↔ {A = A} {B} fs {xs} {y})
       module map {A B} f xs {y} = ↔ (map-∈↔ {A = A} {B} {f} {y} {xs})
 
