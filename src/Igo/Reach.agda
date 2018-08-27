@@ -6,9 +6,8 @@ module Igo.Reach {n : ℕ} where
   open import Data.Fin.Suc
   open import Data.List as List using (List; []; _∷_; _++_)
   open import Data.List.Any as Any
-  open import Data.List.Any.Membership.Map
   open import Data.List.Any.Properties as AnyP using (map↔; ++↔)
-  open import Data.List.Any.Membership.Propositional
+  open import Data.List.Membership.Propositional
   open import Data.List.NonEmpty as List⁺
   open import Data.List.Properties as ListP
   open import Data.Maybe as Maybe using (Maybe; just; nothing)

@@ -4,8 +4,8 @@ module Data.Fin.Suc where
   open import Data.Fin.Properties as FinP
   open import Data.List as List
   open import Data.List.Any as Any
-  open import Data.List.Any.Membership.Propositional
-  open import Data.List.Any.Membership.Map
+  open import Data.List.Membership.Propositional
+  open import Data.List.Membership.Propositional.Properties
   open import Data.List.Any.Properties as AnyP
   open import Data.Nat as N
   open import Data.Product as Σ
@@ -49,7 +49,7 @@ module Data.Fin.Suc where
       sSs (consistent (Any.map drop-suc (M.from elem)))
 
     complete′ : ∀ {j} → suc i Suc j → j ∈ list′
-    complete′ {.(suc _)} (sSs s) = ∈-map suc (complete s)
+    complete′ {.(suc _)} (sSs s) = ∈-map⁺ (complete s)
 
   suc-enum : ∀ {n} (i : Fin (suc n)) → Enum (i Suc_)
   suc-enum {zero} zero = record
