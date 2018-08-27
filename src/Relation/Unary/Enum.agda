@@ -152,7 +152,7 @@ module Relation.Unary.Enum where
                (f : A → B) → Enum P → (Enum λ b → ∃ λ a → P a × b ≡ f a)
   image-enum f pe = record
     { list = List.map f list
-    ; consistent = λ b∈ → Σ.map id (Σ.map consistent id) {!∈-map⁻ b∈!}
+    ; consistent = λ b∈ → Σ.map id (Σ.map consistent id) (∈-map⁻ b∈)
     ; complete = λ { (a , pa , refl) → ∈-map⁺ (complete pa) }
     }
     where

@@ -184,17 +184,12 @@ module Igo.Reach {n : ℕ} where
   On b , p Reaches-enum = Enum→ equiv enum
     where
     equiv : ∀ {c} →
-      (∃ λ q → c ≡ b q × On b , p ReachesPos q) ⇔ On b , p Reaches c
-    equiv {c} = record
-      { to = →-to-⟶
-        λ { (q , colour , reachesPos) →
-            reaches {colour = fromWitness colour} reachesPos
-          }
-      ; from = →-to-⟶
-        λ { (reaches {colour = colour} reachesPos) →
-            _ , toWitness colour , reachesPos
-          }
-      }
+      (∃ λ q → On b , p ReachesPos q × c ≡ b q) ⇔ On b , p Reaches c
+    equiv {c} = mk-⇔
+      (λ { (q , reachesPos , colour) →
+           reaches {colour = fromWitness colour} reachesPos })
+      (λ { (reaches {colour = colour} reachesPos) →
+           _ , reachesPos , toWitness colour })
 
     enum = image-enum b (On b , p ReachesPos-enum)
 
