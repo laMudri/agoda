@@ -14,7 +14,6 @@ module Relation.Unary.Enum where
   open import Data.List.Any.Properties as AnyP
   open import Data.List.Categorical as LC
   open import Data.List.Membership.Propositional
-  open import Data.List.Membership.Propositional.Map as MemMap
   open import Data.List.Membership.Propositional.Properties
   open import Data.List.Properties as ListP
   open import Data.List.Relation.Sublist.Propositional.Properties
@@ -150,13 +149,11 @@ module Relation.Unary.Enum where
     module M {a} = ↔ (map↔ {P = a ≡_} {to} {list})
 
   image-enum : ∀ {a b p} {A : Set a} {B : Set b} {P : Pred A p}
-               (f : A → B) → Enum P → (Enum λ b → ∃ λ a → b ≡ f a × P a)
+               (f : A → B) → Enum P → (Enum λ b → ∃ λ a → P a × b ≡ f a)
   image-enum f pe = record
     { list = List.map f list
-    ; consistent = λ b∈ → Σ.map id (Σ.map id consistent) (∈-unmap f b∈)
-    ; complete = λ { (a , b≡fa , pa) →
-                     subst (_∈ _) (sym b≡fa) (∈-map f (complete pa))
-                   }
+    ; consistent = λ b∈ → Σ.map id (Σ.map consistent id) {!∈-map⁻ b∈!}
+    ; complete = λ { (a , pa , refl) → ∈-map⁺ (complete pa) }
     }
     where
     open Enum pe
